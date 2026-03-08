@@ -12,19 +12,8 @@ async function init() {
     // Set header subtitle
     document.getElementById('headerSubtitle').textContent = `Welcome to the Pavani Divine Community! Stay updated with the latest news, events, and important information about our apartment complex.`;
     
-    // Set current date
-    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { 
-      month: 'long', 
-      day: 'numeric', 
-      year: 'numeric' 
-    });
-    
-    // Render all tabs
-    renderDashboard();
-    renderFinancials();
-    renderFacilities();
-    renderProjects();
-    renderDocuments();
+    setupMonthSelector();
+    loadMonthData(appData.months[0].id);
     
     // Setup navigation
     setupNavigation();
@@ -32,6 +21,40 @@ async function init() {
     console.error('Error loading data:', error);
   }
 }
+
+
+function setupMonthSelector() {
+  const selector = document.getElementById('monthSelector');
+  
+  // Populate dropdown with months (latest first)
+  selector.innerHTML = appData.months.map(month => 
+    `<option value="${month.id}">${month.label}</option>`
+  ).join('');
+  
+  // Add change event listener
+  selector.addEventListener('change', (e) => {
+    loadMonthData(e.target.value);
+  });
+}
+
+
+function loadMonthData(monthId) {
+  // Find the selected month data
+  currentMonthData = appData.months.find(m => m.id === monthId);
+  
+  if (!currentMonthData) {
+    console.error('Month not found:', monthId);
+    return;
+  }
+  
+  // Re-render all tabs with new month data
+  renderDashboard();
+  renderFinancials();
+  renderFacilities();
+  renderProjects();
+  renderDocuments();
+}
+
 
 function setupNavigation() {
   const navItems = document.querySelectorAll('.nav-item');
@@ -76,8 +99,8 @@ function renderDashboard() {
           <span class="stat-badge indigo">Income</span>
         </div>
         <h3 class="stat-label">Maintenance Collected</h3>
-        <p class="stat-value">${appData.financials.maintenanceCollected}</p>
-        <p class="stat-footer">For ${appData.financials.month}</p>
+        <p class="stat-value">${currentMonthData.financials.maintenanceCollected}</p>
+        <p class="stat-footer">For ${currentMonthData.financials.month}</p>
       </div>
 
       <div class="stat-card">
@@ -129,7 +152,7 @@ function renderDashboard() {
           </h2>
         </div>
         <div class="update-list">
-          ${appData.whatsComingNext.map(update => `
+          ${currentMonthData.whatsComingNext.map(update => `
             <div class="update-card">
               <p class="update-text">${update}</p>
             </div>
@@ -147,7 +170,7 @@ function renderFinancials() {
   container.innerHTML = `
     <div class="section-header">
       <h2 class="section-title" style="font-size: 1.5rem;">Financial Highlights</h2>
-      <span style="font-size: 0.875rem; color: var(--slate-500); font-weight: 500;">${appData.financials.month}</span>
+      <span style="font-size: 0.875rem; color: var(--slate-500); font-weight: 500;">${currentMonthData.label}</span>
     </div>
 
     <div class="financial-grid">
@@ -156,28 +179,28 @@ function renderFinancials() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="12" width="20" height="12" rx="2"/><path d="M12 12h.01"/><path d="M17 12a5 5 0 0 0-10 0"/></svg>
         </div>
         <h4 class="financial-label">Corpus & Deposits</h4>
-        <p class="financial-value">${appData.financials.corpus}</p>
+        <p class="financial-value">${currentMonthData.financials.corpus}</p>
       </div>
       <div class="financial-card">
         <div class="financial-icon emerald">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
         </div>
         <h4 class="financial-label">Maintenance Collected</h4>
-        <p class="financial-value">${appData.financials.maintenanceCollected}</p>
+        <p class="financial-value">${currentMonthData.financials.maintenanceCollected}</p>
       </div>
       <div class="financial-card">
         <div class="financial-icon blue">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 12l-8.5 8.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L12 9"/><path d="M17.64 15L22 10.64"/></svg>
         </div>
         <h4 class="financial-label">Infra Fund</h4>
-        <p class="financial-value">${appData.financials.infraFund}</p>
+        <p class="financial-value">${currentMonthData.financials.infraFund}</p>
       </div>
       <div class="financial-card">
         <div class="financial-icon amber">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
         <h4 class="financial-label">Stalls Income</h4>
-        <p class="financial-value">${appData.financials.stalls}</p>
+        <p class="financial-value">${currentMonthData.financials.stalls}</p>
       </div>
     </div>
 
@@ -190,12 +213,12 @@ function renderFinancials() {
         
         <div class="chart-container">
           <svg viewBox="0 0 200 200" width="160" height="160">
-            ${generateDonutChart(appData.financials.expenseBreakdown, colors)}
+            ${generateDonutChart(currentMonthData.financials.expenseBreakdown, colors)}
           </svg>
         </div>
 
         <div class="chart-legend">
-          ${appData.financials.expenseBreakdown.map((item, idx) => `
+          ${currentMonthData.financials.expenseBreakdown.map((item, idx) => `
             <div class="legend-item">
               <span class="legend-color" style="background: ${colors[idx % colors.length]}"></span>
               <span>${item.name}</span>
@@ -206,15 +229,15 @@ function renderFinancials() {
         <div class="expense-summary">
           <div class="expense-row">
             <span class="expense-row-label">Total Operational Expenses</span>
-            <span class="expense-row-value">${appData.financials.totalOperationalExpenses}</span>
+            <span class="expense-row-value">${currentMonthData.financials.totalOperationalExpenses}</span>
           </div>
           <div class="expense-row">
             <span class="expense-row-label">Cauvery Water EMI</span>
-            <span class="expense-row-value">${appData.financials.cauveryEMI}</span>
+            <span class="expense-row-value">${currentMonthData.financials.cauveryEMI}</span>
           </div>
           <div class="expense-highlight">
             <span class="expense-highlight-label">Remaining for O&M</span>
-            <span class="expense-highlight-value">${appData.financials.remainingOM}</span>
+            <span class="expense-highlight-value">${currentMonthData.financials.remainingOM}</span>
           </div>
         </div>
       </div>
@@ -275,11 +298,11 @@ function renderFinancials() {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
             Miscellaneous Expenses
           </h3>
-          <p class="misc-subtitle">Detailed breakdown of one-time costs for ${appData.financials.month}</p>
+          <p class="misc-subtitle">Detailed breakdown of one-time costs for ${currentMonthData.label}</p>
         </div>
         <div class="misc-total">
           <span class="misc-total-label">Total Misc</span>
-          <span class="misc-total-value">${appData.financials.totalMisc}</span>
+          <span class="misc-total-value">${currentMonthData.financials.totalMisc}</span>
         </div>
       </div>
 
@@ -293,7 +316,7 @@ function renderFinancials() {
             </tr>
           </thead>
           <tbody>
-            ${appData.financials.miscExpenses.map(expense => `
+            ${currentMonthData.financials.miscExpenses.map(expense => `
               <tr>
                 <td>${expense.id}</td>
                 <td>${expense.item}</td>
